@@ -1,0 +1,25 @@
+- Usefullness
+	- Comparing to traditional GUI
+	- Comparing in collaborative learning and interaction
+	- Alternative for visually impaired people
+	- Bad Screen time consequences for children and TUI could eliminate this
+
+
+Should focus where triangulation at the moment exists
+
+Display used to study information, no flashy stuff from my M5Stack Project.
+
+Look into embodied cognition, how we use our body to process information.
+
+Look into triangulation 
+
+Research questions:
+- Behouden en je gaat zien dat de vragen in de toekomst toch nog  gaan veranderen.
+- Ze zullen meer kleiner worden 
+- Niet te technische vragen
+
+Reseach questiono I expect it to be better at learning etc... 
+
+
+Bij het testen met users, laat ze leren met de TUI en dan erna testen of ze het echt geleerd hebben. 
+

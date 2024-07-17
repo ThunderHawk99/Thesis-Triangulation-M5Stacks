@@ -1,0 +1,7 @@
+- How to communicate information to the users
+- How to do positioning with tangibles
+- How to do communication between the tangibles
+- How to do rotation with the tangibles
+- How to do memory game with tangibles
+- How to do learning with tangibles
+

@@ -1,0 +1,42 @@
+Meeting: 30/11/2023
+
+- UIFlow en UIFlow 2.0 many errors and bugs and crashes via USB mode --> Always reburning, turning off, replugging usb cable etc...
+- Problem is that UIFlow has much more functionalities than UIFlow 2.0.
+- But all functionality in UIFlow 2.0 does work, while in UIFlow not everything seems to work or it says missing this or that.
+- Arduino better but still not consistent and much longer compiling time
+- Discovered after a lot of time that connecting the M5Stacks that my mobile hotspot and using INTERNET mode is very consistent on UIFlow
+also pretty good on UIFlow 2.0 but it still in Alpha version so thats why sometimes it crashes but quickly recovers
+- Tried connecting 2 devices via bluetooth which worked
+- Tried connecting a device with wifi via UIFlow which also worked
+
+
+Positioning:
+	- Thinking of using Bluetooth or Wifi as beacons or reference points for determining the position of the other M5Stacks. This beacon can then send the positions of all M5Stacks to the connected M5Stacks
+	- Found something called BLE (Bluetooth Low Energy), wireless communication technology designed for short-range communication with low power consumption. I found that M5Stack has BLE in FlowUI.
+	- Other way was using WIFI that is also used in indoor positioning systems but on a much greater scale. Might be alternative if bluetooth may become too difficult.
+	- Another unit from the M5Stack Core2 that I came across was the Ultra Wide Band. It is a unit that uses nanosecond pulses to locate objects and define position and orientation. On the M5Stack website is says it can be used for Indoor tracking and accurate range finding.
+	The positioning accuracy is 10cm so it can be like 10cm off target.
+
+Remarks: 
+- Mijn struggles opsommen in mijn thesis en alle opties enz...
+- Deze zaken best in related work ofs zeggen. Vooral belangrijk om te vertellen waarom ik UIFlow t.o.v. Arduino (low-level) code zou prefereren.
+- Niet zooo belangrijk om in detail te gaan met mijn UIFlow en USB mode struggles enz maar kan gwn eens vermelden natuurijk.
+- Best nu deze zaken vermelden want 6 maand later kan ik erover zijn vergeten.
+- Ultrawideband gebruiken om afstand te bepalen en interne gyroscope gebruiken om orientatie te bepalen.
+- Presentatie informatie zal nog komen ongeveer week van 13 december - gewoon praten ook over struggles, use case showen of visualiseren om ze te laten begrijpen.
+- Planning van nu tot eind semester maken high-level
+
+
+
+Meeting: 7/12/2023
+- Tested the UWB for position, managed to run the example code from UWB on UIFlow
+- Tag knows his location relative from the anchor point. If I have multiple anchor points than he could also display his position in regards to that
+- 
+
+Notes:
+- Kompas optie vr windrichting of gyroscope gebruiken.
+- Hardware limitations testen
+- Communicatie tussen M5Stacks proberen fixen via een aparte module in UIFlow
+
+
+

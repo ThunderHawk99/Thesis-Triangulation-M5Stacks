@@ -1,0 +1,35 @@
+- Introduction gaat over wat mijn thesis is, wat ik heb gemaakt, hoe gebruikers ermee moeten interacten
+- Related Work
+	- Meer background om lezers die niks van weten, een meer background te geven voor de rest van de thesis
+	- Niet in detail maar gwn een goeie overview kunnen geven.
+	- Wat is al gedaan in tangible interaction
+	- Wat is al gedaan met location tracking with the stacks
+	- Wat is al gedaan in de topic van herkennen van patronen
+	- Wat is al gedaan basically
+	- Kijken naar andere papers
+- Literature Review
+	- Praat meer over implementaties of dingen die verbeterd kunnen worden.
+	- De hele in-depth.
+	- Ik wil gaps invullen van the related work.
+	- Als ik examples gebruik in related work, kan hier in detail verder beschrijven.
+- Na dat moet ik technische implementatie uitleggen
+- Als ik studie doe, dan moet ik uitleggen wat ik gedaan heb in de studie.
+- Het maakt niet als het resultaat niet is wat ik zou verwacht hebben.
+- Er is een template van de secties dat in de thesis moet zitten.
+- Meer secties dan in outlined in de document is okay, voor sommige thesisen maakt het sense om sommige weg te laten
+- Beat zal een overleaf project aanmaken.
+
+Introduction uitleggen aan iemand die geen expert is in the field.
+Literature review is iemand die wel the field verstaat en daarin uitleggen.
+
+Gap, tangibles is nog niet gebruikt om movements te gebruiken.
+Gap kan technologisch zijn en ook specifiek probleem.
+
+Comparing motor-cognitive strategies for spatial problem solving with tangible and multi-touch interfaces
+--> Good counter argument against 
+
+Look at other papers that have cited that paper
+
+Toevoegen bij wat zij de challenges
+- How to communicate naturally to other users
+- etc....
