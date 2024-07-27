@@ -2,154 +2,152 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-bool UWBEnabled = false;
+#include <ArduinoWebsockets.h>
 
-// WIFI Settings
-const char* ssid = "FaroukhGSM";
-const char* password = "12345678";
-const char* timeServerUrl = "http://192.168.183.233:3000/current-time";
-const char* distanceServerUrl = "http://192.168.183.233:3000/distance";
+bool IN_QUEUE = false;
+bool WAS_MOVING = false;
+extern String DISTANCE_A;
+extern String DISTANCE_B;
+extern String DISTANCE_C;
+extern String DISTANCE_D;
+extern int TAG_ID;
 
-String DATA  = " ";  // Used to store distance data . 
-int UWB_MODE = 0;    // Used to set UWB mode . 
-int UWB_T_NUMBER      = 0;  // Current number of UWB Tags detected
-int TAG_ID = 2;
-String commands[4] = {"AT+anchor_tag=0," + String(TAG_ID) + "\r\n", "AT+interval=5\r\n", "AT+switchdis=0\r\n", "AT+RST\r\n"};
-String turnOffCommand = "AT+switchdis=0\r\n";
-String turnOnCommand = "AT+switchdis=1\r\n";
+using namespace websockets;
+extern WebsocketsClient client;
+void connectWebSocket();
+void initWifi();
+void enableUWB();
+void disableUWB();
+void configureUWB();
+bool getPosition();
+void sendDataToServer(String tagId, String dA, String dB, String dC, String dD);
+void sendRequestMove(int TAG_ID);
+void sendMovementDone(int TAG_ID);
 
-int numCommands = 4;
-
-const int startOffset = 2;  // Starting index for anchorID in the data string
-const int anchorIdLength = 1;  // Length of the anchor ID
-const int distanceStartOffset = 4;  // Starting index for distance in the data string
-const int distanceLength = 4;  // Length of the distance string
-const int dataPacketSize = 11;  // Size of one complete data packet
-const int yBase = 50;  // Base y-coordinate for drawing strings
-const int yIncrement = 40;  // Y increment per data entry
-
-// Get position
-void getPosition() {
-  if (UWB_T_NUMBER > 0 && UWB_T_NUMBER < 5) {
-    String dA = "0";
-    String dB = "0";
-    String dC = "0";
-
-    for (int i = 0; i < UWB_T_NUMBER; i++) {
-      int anchorIdStart = startOffset + i * dataPacketSize;
-      int distanceStart = distanceStartOffset + i * dataPacketSize;
-      String anchorID = DATA.substring(anchorIdStart, anchorIdStart + anchorIdLength);
-      String distance = DATA.substring(distanceStart, distanceStart + distanceLength);
-      Serial.println("AnchorID: " + anchorID + " | Distance: " + distance + "m");
-      if(anchorID == "1"){
-        dA = distance;
-      }
-      if(anchorID == "2"){
-        dB = distance;
-      }
-      if(anchorID == "3"){
-        dC = distance;
-      }
-    }
-    sendDataToServer(String(TAG_ID), dA, dB, dC);
-    Serial.println("----------------------------------------------------------------");
+void onEventsCallback(WebsocketsEvent event, String data) {
+  if (event == WebsocketsEvent::ConnectionOpened) {
+    Serial.println("Connnection Opened");
+  } else if (event == WebsocketsEvent::ConnectionClosed) {
+    Serial.println("Connnection Closed");
+    connectWebSocket();
+  } else if (event == WebsocketsEvent::GotPing) {
+    Serial.println("Got a Ping!");
+  } else if (event == WebsocketsEvent::GotPong) {
+    Serial.println("Got a Pong!");
   }
 }
 
-// Read UART data 
-void readPositionData() {
-  if (Serial2.available()) {
-      delay(20);
-      UWB_T_NUMBER = (Serial2.available() / 11);  // Count the number of Base stations, each base station sends a packet of 11 bytes to a tag
-      delay(20);
-      DATA = Serial2.readString();
-      delay(2);
+// Define your callback function
+void onMessageCallback(WebsocketsMessage message) {
+  // Parse the received message
+  StaticJsonDocument<200> doc;
+  DeserializationError error = deserializeJson(doc, message.data());
+
+  if (error) {
+    Serial.print("deserializeJson() failed: ");
+    Serial.println(error.c_str());
+    return;
   }
-}
 
-void sendCommandWithDelay(const String& command, unsigned long delayMs) {
-    Serial2.print(command);
-    delay(delayMs);  // Consider alternatives if responsiveness is a concern.
-}
+  // Check the type of the message and handle accordingly
+  String type = doc["type"].as<String>();
 
-void configureUWB() {
-  if (UWB_MODE == 0) {
-    for (int b = 0; b < 2; b++) {  // Repeat twice to stabilize the connection
-      for (int i = 0; i < numCommands; i++) {
-        // Send the reset command only in the first cycle.
-        if (i != (numCommands - 1) || b == 0) {
-          sendCommandWithDelay(commands[i], 50);
+  if (type == "direction") {
+    String direction = doc["direction"];
+    // Handle test message
+    Serial.println(direction);
+
+  } else if (type == "allow_move") {
+    // Handle allow_move message
+    int tag_id = doc["tag_id"].as<int>();
+    Serial.print("Tag ");
+    Serial.print(tag_id);
+    Serial.println(" is allowed to move.");
+    if (tag_id == TAG_ID) {
+      enableUWB();
+      int valuesRead = 0;
+      while (valuesRead <= 5) {  // Get 6 measurements
+        bool read_position = getPosition();
+        if (read_position) {
+          valuesRead++;
         }
       }
+      sendDataToServer(String(TAG_ID), DISTANCE_A, DISTANCE_B, DISTANCE_C, DISTANCE_D);
+      disableUWB();
+      delay(100);
+      sendMovementDone(TAG_ID);
+      showGreen();
+      IN_QUEUE = false;
     }
+
+  } else if (type == "error") {
+    // Handle error message
+    Serial.print("Error: ");
+    Serial.println(doc["message"].as<String>());
+  } else {
+    // Handle unknown message type
+    Serial.println("Unknown message type received. : " + type);
   }
-  delay(100);
-}
-
-// Function to disable Serial2
-void disableUWB() {
-    sendCommandWithDelay(turnOffCommand, 50);
-    UWBEnabled = false;  // Update flag to indicate Serial2 is disabled
-}
-
-void enableUWB(){
-    sendCommandWithDelay(turnOnCommand, 50);
-    UWBEnabled = true;
 }
 
 void startM5Stack() {
-    M5.begin();
-    Serial2.begin(115200, SERIAL_8N1, 33, 32);
-    delay(100);
+  M5.begin();
+  Serial2.begin(115200, SERIAL_8N1, 33, 32);
+  delay(100);
 }
 
 void setup() {
-    startM5Stack();
-    initWifi();
-    M5.IMU.Init();
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setTextColor(GREEN, BLACK); 
-    M5.Lcd.setTextSize(2);  
-    initARHS();
-    configureUWB();
+  // Start M5Stack
+  startM5Stack();
+  // Init WIFI
+  initWifi();
+  // Callback for messages
+  client.onMessage(onMessageCallback);
+  // Callback for events
+  client.onEvent(onEventsCallback);
+  // Start IMU
+  M5.IMU.Init();
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextColor(GREEN, BLACK);
+  M5.Lcd.setTextSize(2);
+  // Init ARHS
+  initARHS();
+  // Configure UWB
+  configureUWB();
+  // Show Green LED
+  sendRequestMove(TAG_ID);
+  IN_QUEUE = true;
+  showRed();
+
 }
 
 void loop() {
-  M5.update(); 
-  printMovingStatus(isMoving());
+  if (client.available()) {
+    client.poll();
+  }
+  M5.update();
 
-  // if (WiFi.status() == WL_CONNECTED) {
-  //   HTTPClient http;
-  //   http.begin(timeServerUrl);
+  // If not in queue
+  if (!IN_QUEUE) {
+    bool moving = isMoving();
+    printMovingStatus(moving);
 
-  //   int httpResponseCode = http.GET();
-  //   if (httpResponseCode > 0) {
-  //     String response = http.getString();
-  //     DynamicJsonDocument doc(1024);
-  //     deserializeJson(doc, response);
+    // Was moving and still moving
+    if (moving && WAS_MOVING) {
+      // Do nothing
+    }
 
-  //     int seconds = doc["seconds"];
-  //     Serial.println(seconds);
-  //     if(seconds >= 0 && seconds <= 30){
-  //       if(UWBEnabled){
-  //         readPositionData();
-  //         getPosition();
-  //       }else{
-  //         enableUWB();
-  //         readPositionData();
-  //         getPosition();
-  //       }
-  //     }else{
-  //       disableUWB();
-  //     }
+    // Was not moving but started moving
+    if (moving && !WAS_MOVING) {
+      WAS_MOVING = true;
+      showRed();
+    }
 
-  //     // Example of integrating the seconds value into existing logic
-  //     // For example, use `seconds` in your sendDataToServer function or other operations.
-  //   } else {
-  //     Serial.print("Error on HTTP request: ");
-  //     Serial.println(httpResponseCode);
-  //   }
-
-  //   http.end();
-  // }
+    // Was moving but stopped moving
+    if (!moving && WAS_MOVING) {
+      sendRequestMove(TAG_ID);
+      IN_QUEUE = true;
+      WAS_MOVING = false;
+    }
+  }
 }

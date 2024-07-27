@@ -1,52 +1,85 @@
-// WIFI Settings
-const char* WIFI_SSID  = "FaroukhGSM";
-const char* WIFI_PASSWORD  = "12345678";
-const char* TIME_SERVER_URL  = "http://192.168.183.233:3000/current-time";
-const char* DISTANCE_SERVER_URL  = "http://192.168.183.233:3000/distance";
+#include <WiFi.h>
+#include <ArduinoJson.h>
+#include <ArduinoWebsockets.h>
 
-void initWifi(){
-    // Connect to WiFi
-    WiFi.begin(WIFI_SSID , WIFI_PASSWORD );
-    while (WiFi.status() != WL_CONNECTED) {
-      Serial.println("Connecting to WiFi...");
-      delay(2000);
-    }
-    Serial.println("Connected to WiFi");
+// WiFi settings
+const char* WIFI_SSID = "dafarbel";
+const char* WIFI_PASSWORD = "f11021974";
+const char* WEBSOCKETS_SERVER_HOST = "192.168.178.182";  // Server address
+const uint16_t WEBSOCKETS_SERVER_PORT = 5000;            // Server port
+
+using namespace websockets;
+WebsocketsClient client;
+
+void sendRequestMove(int TAG_ID) {
+  StaticJsonDocument<200> doc;
+  doc["type"] = "request_move";
+  doc["tag_id"] = TAG_ID;  // Your specific tag ID
+
+  String message;
+  serializeJson(doc, message);
+  client.send(message);
+}
+
+void sendMovementDone(int TAG_ID) {
+  StaticJsonDocument<200> doc;
+  doc["type"] = "movement_done";
+  doc["tag_id"] = TAG_ID;  // Your specific tag ID
+
+  String message;
+  serializeJson(doc, message);
+  client.send(message);
+}
+
+// Initialize WiFi connection
+void initWifi() {
+  Serial.print("Connecting to WiFi...");
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+
+  Serial.println("\nConnected to WiFi");
+  connectWebSocket();  // Connect to WebSocket server after WiFi is connected
+}
+
+// Connect to the WebSocket server
+void connectWebSocket() {
+  bool connected = client.connect(WEBSOCKETS_SERVER_HOST, WEBSOCKETS_SERVER_PORT, "/");
+
+  if (connected) {
+    Serial.println("Connected to WebSocket server!");
+  } else {
+    Serial.println("Failed to connect to WebSocket server!");
+  }
+}
+
+// Convert string to measurement value
+int stringToMeasurementValue(String value) {
+  float f_value = value.toFloat() * 100;
+  return static_cast<int>(f_value);
 }
 
 // Send relative positions to server
-void sendDataToServer(String tagId, String dA, String dB, String dC) {
+void sendDataToServer(String tagId, String dA, String dB, String dC, String dD) {
   if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin(distanceServerUrl);
-    http.addHeader("Content-Type", "application/json");
-
-    // Create JSON object
     StaticJsonDocument<200> doc;
-    doc["tagId"] = tagId;
-    doc["dA"] = dA;
-    doc["dB"] = dB;
-    doc["dC"] = dC;
+    doc["type"] = "update_measurements";  // Specify the event type
+    JsonObject data = doc.createNestedObject("data");
+    data["tagID"] = tagId.toInt();
+    data["distance1"] = stringToMeasurementValue(dA);
+    data["distance2"] = stringToMeasurementValue(dB);
+    data["distance3"] = stringToMeasurementValue(dC);
+    data["distance4"] = stringToMeasurementValue(dD);
 
     String jsonPayload;
     serializeJson(doc, jsonPayload);
 
-    Serial.println("Sending payload: " + jsonPayload); // Debug: print the payload
-
-    // Send HTTP POST request
-    int httpResponseCode = http.POST(jsonPayload);
-
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      Serial.println("HTTP Response code: " + String(httpResponseCode));
-      Serial.println("Response: " + response);
-    } else {
-      Serial.println("Error on sending POST: " + String(httpResponseCode));
-    }
-
-    // Free resources
-    http.end();
+    Serial.println("Sending payload: " + jsonPayload);  // Debug: print the payload
+    client.send(jsonPayload);
   } else {
-    Serial.println("WiFi Disconnected");
+    Serial.println("WiFi disconnected or WebSocket not available.");
   }
 }
