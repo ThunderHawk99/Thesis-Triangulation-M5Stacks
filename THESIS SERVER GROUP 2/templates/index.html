@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trilateration Visualization</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #plot {
+            width: 80vw;
+            height: 80vh;
+        }
+        .controls {
+            margin: 20px;
+        }
+        #status-message {
+            font-size: 1.5em;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label>
+            <input type="checkbox" id="show-overlaps" checked>
+            Show Overlap Regions
+        </label>
+    </div>
+    <div id="status-message">Checking status...</div>
+    <div id="plot"></div>
+    <script>
+        const socket = new WebSocket('ws://192.168.178.182:5000');
+
+        function formatReorderSteps(reorderSteps) {
+            return reorderSteps.map(([from, to]) => `Move Tag ${from} to the position of Tag ${to + 1}`).join(', ');
+        }
+
+        function formatMoveMessages(movementMessages) {
+            return movementMessages.map(msg => `Tag ${msg.index}: ${msg.message}`).join('<br>');
+        }
+
+        socket.onopen = () => {
+            console.log('Connected to server');
+            socket.send(JSON.stringify({ type: 'request_data' }));
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'response_data') {
+                console.log('Received data from server:', data);
+                const plotData = [];
+                const showOverlaps = document.getElementById('show-overlaps').checked;
+
+                // Update status message
+                let statusMessage = data.data.status;
+                if (data.data.status === 'NEXT TO EACH OTHER BUT NOT IN ORDER' && data.data.reorder_steps) {
+                    statusMessage += ` - ${formatReorderSteps(data.data.reorder_steps)}`;
+                }
+                if (data.data.movement_messages && data.data.movement_messages.length > 0) {
+                    statusMessage += `<br>${formatMoveMessages(data.data.movement_messages)}`;
+                }
+                document.getElementById('status-message').innerHTML = statusMessage;
+
+                // Plot anchors
+                plotData.push({
+                    x: data.data.anchors.map(anchor => anchor[0]),
+                    y: data.data.anchors.map(anchor => anchor[1]),
+                    mode: 'markers',
+                    type: 'scatter',
+                    marker: {color: 'black', size: 8},
+                    name: 'Anchors'
+                });
+
+                // Plot overlaps and centroids
+                data.data.tags.forEach((tag, index) => {
+                    const tagColor = tag.color;
+
+                    if (showOverlaps) {
+                        tag.overlaps.forEach((overlap, overlapIndex) => {
+                            plotData.push({
+                                x: overlap.x,
+                                y: overlap.y,
+                                fill: 'toself',
+                                fillcolor: `rgba(${parseInt(tagColor.slice(4, 7))}, ${parseInt(tagColor.slice(9, 12))}, ${parseInt(tagColor.slice(13, 16))}, 0.3)`,
+                                line: {color: tagColor},
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: `Overlap Tag ${index + 1} - Region ${overlapIndex + 1}`
+                            });
+                        });
+                    }
+
+                    tag.centroids.forEach((centroid, centroidIndex) => {
+                        plotData.push({
+                            x: [centroid.x],
+                            y: [centroid.y],
+                            mode: 'markers',
+                            marker: {
+                                color: 'red',
+                                size: 10,
+                                symbol: 'x'
+                            },
+                            name: `Centroid Tag ${index + 1}`
+                        });
+                    });
+                });
+
+                // Plot bounding box if it exists
+                if (data.data.box) {
+                    plotData.push({
+                        x: data.data.box.x,
+                        y: data.data.box.y,
+                        fill: 'toself',
+                        fillcolor: data.data.box.color,
+                        line: data.data.box.line,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Bounding Box'
+                    });
+                }
+
+                Plotly.newPlot('plot', plotData, {
+                    title: 'Trilateration Visualization',
+                    xaxis: {title: 'X (cm)', showgrid: true, zeroline: false},
+                    yaxis: {title: 'Y (cm)', showgrid: true, zeroline: false}
+                });
+            }
+        };
+
+        socket.onclose = () => {
+            console.log('Disconnected from server');
+        };
+
+        // Refresh plot every 3 seconds
+        setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'request_data' }));
+            }
+        }, 3000);
+
+        // Add event listener to update plot when checkbox is toggled
+        document.getElementById('show-overlaps').addEventListener('change', () => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'request_data' }));
+            }
+        });
+    </script>
+</body>
+</html>

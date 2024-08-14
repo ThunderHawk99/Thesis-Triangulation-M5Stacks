@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Client</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>WebSocket Client</h1>
+    <script>
+        const socket = io('http://192.168.178.182:5000');
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            socket.emit('request_data');  // Correctly emit the request_data event
+        });
+
+        socket.on('response_data', (data) => {
+            console.log('Received data from server:', data);
+            // Process the received data as needed
+        });
+
+        socket.on('update_result', (message) => {
+            console.log('Update result:', message);
+        });
+
+        socket.on('broadcast', (message) => {
+            console.log('Broadcast message received:', message);
+            // You can update the DOM or handle the broadcast message here
+        });
+
+        socket.on('welcome', (message) => {
+            console.log('Server says:', message);
+        });
+
+        socket.on('response', (message) => {
+            console.log('Server response:', message);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+    </script>
+</body>
+</html>

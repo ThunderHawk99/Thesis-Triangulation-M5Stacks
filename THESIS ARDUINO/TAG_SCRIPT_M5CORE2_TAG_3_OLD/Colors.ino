@@ -25,3 +25,22 @@ void resetTopScreen() {
   // Set the background color to white
   M5.Lcd.fillRect(0, 0, M5.Lcd.width(), contentHeight, TFT_WHITE);
 }
+
+void showSwapMessage() {
+    int screenHeight = M5.Lcd.height();
+    int statusBarHeight = 50;                         // Height of the status bar
+    int statusBarY = screenHeight - statusBarHeight;  // Y-coordinate of the status bar
+
+    // Set the text color to white
+    M5.Lcd.setTextColor(TFT_WHITE);
+    M5.Lcd.setTextSize(2);                            // Set the size of the text
+
+    // Calculate the center position for the text
+    int textWidth = M5.Lcd.textWidth("SWAP");         // Get the width of the text
+    int textX = (M5.Lcd.width() - textWidth) / 2;     // X-coordinate for centered text
+    int textY = statusBarY + (statusBarHeight - 16) / 2; // Y-coordinate for centered text, considering text height
+
+    // Draw the text "SWAP" in the center of the status bar
+    M5.Lcd.setCursor(textX, textY);
+    M5.Lcd.print("SWAP");
+}
