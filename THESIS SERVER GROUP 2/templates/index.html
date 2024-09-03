@@ -63,9 +63,9 @@
                 if (data.data.status === 'NEXT TO EACH OTHER BUT NOT IN ORDER' && data.data.reorder_steps) {
                     statusMessage += ` - ${formatReorderSteps(data.data.reorder_steps)}`;
                 }
-                if (data.data.movement_messages && data.data.movement_messages.length > 0) {
-                    statusMessage += `<br>${formatMoveMessages(data.data.movement_messages)}`;
-                }
+                // if (data.data.movement_messages && data.data.movement_messages.length > 0) {
+                //     statusMessage += `<br>${formatMoveMessages(data.data.movement_messages)}`;
+                // }
                 document.getElementById('status-message').innerHTML = statusMessage;
 
                 // Plot anchors

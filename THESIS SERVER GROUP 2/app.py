@@ -101,7 +101,7 @@ async def handle_client(websocket, path):
                         if movement_messages:
                             # For every movement message, broadcast it to the clients
                             for message in movement_messages:
-                                print(f"Broadcasting message: {message['message']} to tag {message['index']}")
+                                print(f"Broadcasting message: {message['message']} to tag {message['index']}")  
                                 await broadcast({'type': 'movement_message', 'message': message['message'], 'tag_id': message['index']})
                     else:
                         print('No movement messages')

@@ -29,9 +29,9 @@ extern void playSwapSound();
 extern void playFinishGameSound();
 
 // Relative tag position audio
-// extern void play_move_right_down(); // GOOD
+extern void play_move_right_down(); // GOOD
 // extern void play_move_left_down(); // GOOD
-// extern void play_move_right_up(); // GOOD
+extern void play_move_right_up(); // GOOD
 // extern void play_move_left_up(); // GOOD
 // extern void play_move_up(); // GOOD
 // extern void play_move_down(); // GOOD
@@ -146,12 +146,12 @@ void onMessageCallback(WebsocketsMessage message) {
       String message = doc["message"].as<String>();
       Serial.println(message);
       if(message == "Move it right, up next to tag 2"){
-        // play_move_right_up();
+        play_move_right_up();
         displayCustomMessage("Move up and place on right to tag 2");
       }
       if(message == "Move it right, down next to tag 2"){
         displayCustomMessage("Move down and place on right to tag 2");
-        // play_move_right_down();
+        play_move_right_down();
       }
       if(message == "Move it left, up next to tag 2"){
         displayCustomMessage("Move up and place on left to tag 2");
