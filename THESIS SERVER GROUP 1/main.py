@@ -7,8 +7,8 @@ from shapely.ops import unary_union
 # Define the anchor points and distances for multiple tags
 anchors = [(0, 85), (85, 85), (85, 0), (0, 0)]
 tag_distances = [
-    [114, 108, 67, 61],  # Distances for Tag 1
-    [59, 66, 104, 95],   # Distances for Tag 2
+    # [114, 108, 67, 61],  # Distances for Tag 1
+    # [59, 66, 104, 95],   # Distances for Tag 2
     [80,104,102,56.99999999999999]     # Distances for Tag 3
 ]
 error_margin = 0
@@ -67,7 +67,7 @@ plt.xlim(-10, 100)
 plt.ylim(-10, 100)
 plt.xlabel('X (cm)')
 plt.ylabel('Y (cm)')
-plt.title('Trilateration and Common Overlaps')
+plt.title('Multilateration and Common Overlaps')
 plt.grid(True)
 
 # Add legend
